@@ -1,0 +1,65 @@
+esphome:
+  name: inky-frame-7in3
+  min_version: 2024.6.0
+
+rp2:
+  board: rpipico2w
+
+external_components:
+  - source:
+      type: local
+      path: components
+    components: [inky_frame_73]
+
+logger:
+  level: DEBUG
+  hardware_uart: UART0
+  baud_rate: 115200
+
+# HOLD_VSYS_EN: must be held high to power the display and keep the board awake
+output:
+  - platform: gpio
+    pin: GPIO2
+    id: vsys_en
+
+switch:
+  - platform: output
+    name: "VSYS Enable"
+    output: vsys_en
+    id: vsys_switch
+    restore_mode: ALWAYS_ON
+
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO19
+  miso_pin: GPIO16
+
+display:
+  - platform: inky_frame_73
+    id: inky
+    # All pins below are the Inky Frame defaults and can be left out.
+    cs_pin: GPIO17
+    dc_pin: GPIO28
+    reset_pin: GPIO27
+    sr_clock_pin: GPIO8
+    sr_latch_pin: GPIO9
+    sr_data_pin: GPIO10
+    rotation: 0
+    update_interval: 5min
+    lambda: |-
+      const Color colors[] = {
+        Color(0, 0, 0),        // black
+        Color(255, 255, 255),  // white
+        Color(255, 255, 0),    // yellow
+        Color(255, 0, 0),      // red
+        Color(0, 0, 255),      // blue
+        Color(0, 255, 0),      // green
+      };
+      const int w = it.get_width();
+      for (int i = 0; i < 6; i++) {
+        const int x0 = w * i / 6;
+        const int x1 = w * (i + 1) / 6;
+        it.filled_rectangle(x0, 0, x1 - x0, it.get_height(), colors[i]);
+      }
+      it.filled_circle(it.get_width() / 2, it.get_height() / 2, 100, Color(255, 255, 255));
+      it.circle(it.get_width() / 2, it.get_height() / 2, 100, Color(0, 0, 0));
